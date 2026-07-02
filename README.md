@@ -62,7 +62,15 @@ cd nuvio-forced-subs
 PUBLIC_URL=https://nuvio-subs.yourdomain.com ADMIN_PASSWORD=pick-a-password docker compose up -d --build
 ```
 
-### Option B — Using the Unraid Docker UI (prebuilt image)
+### Option B — Unraid template (easiest)
+
+This repo doubles as an Unraid template repository:
+
+1. Unraid → **Docker** tab → scroll to **Template Repositories** → paste `https://github.com/jamesgallagher/Nuvio-Forced-English-Subtitles` → **Save**
+2. **Add Container** → pick *Nuvio-Forced-English-Subtitles* from the Template dropdown
+3. Set your **Public URL**, optionally an **Admin Password**, and **Apply** — ports, the `/data` path and icon are pre-filled
+
+### Option C — Using the Unraid Docker UI manually (prebuilt image)
 
 Every push to `main` automatically builds and publishes `ghcr.io/jamesgallagher/nuvio-forced-english-subtitles:latest` (amd64 + arm64) via GitHub Actions, so Unraid can pull it directly — no local build needed.
 
@@ -128,7 +136,7 @@ git pull
 docker compose up -d --build
 ```
 
-**Unraid Docker UI (Option B):** use *force update* on the container (or re-pull `:latest`) — the image is rebuilt automatically on every commit.
+**Unraid template / Docker UI (Options B & C):** use *force update* on the container (or re-pull `:latest`) — the image is rebuilt automatically on every commit.
 
 User accounts are stored in `/data/users.json` and are preserved across updates.
 

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Nuvio-Forced-English-Subtitles</Name>
+  <Repository>ghcr.io/jamesgallagher/nuvio-forced-english-subtitles:latest</Repository>
+  <Registry>https://github.com/jamesgallagher/Nuvio-Forced-English-Subtitles/pkgs/container/nuvio-forced-english-subtitles</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Project>https://github.com/jamesgallagher/Nuvio-Forced-English-Subtitles</Project>
+  <Support>https://github.com/jamesgallagher/Nuvio-Forced-English-Subtitles/issues</Support>
+  <ReadMe>https://github.com/jamesgallagher/Nuvio-Forced-English-Subtitles#readme</ReadMe>
+  <TemplateURL>https://raw.githubusercontent.com/jamesgallagher/Nuvio-Forced-English-Subtitles/main/unraid-template/nuvio-forced-english-subtitles.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/jamesgallagher/Nuvio-Forced-English-Subtitles/main/icon.png</Icon>
+  <Category>MediaApp:Other Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:7001]/</WebUI>
+  <ExtraParams/>
+  <PostArgs/>
+  <DonateText/>
+  <DonateLink/>
+  <Overview>
+    English forced subtitles (foreign-dialogue only) addon for Nuvio Media Player.
+
+    Automatically finds English forced subtitles for foreign dialogue in otherwise-English content, and returns nothing when no forced subtitle exists - so fully-English content plays clean with no subtitles.
+
+    Multi-user: each user enters their own OpenSubtitles.com credentials on the landing page and receives a private, tokenised manifest URL tied to their own account and download quota.
+
+    Setup: after starting the container, browse to your Public URL, create your addon URL, then install it in Nuvio (Settings > Addons). Requires a public HTTPS URL (e.g. Cloudflare Tunnel) pointed at this container, since Nuvio devices download subtitles directly from it.
+  </Overview>
+  <Description>
+    English forced subtitles (foreign-dialogue only) addon for Nuvio Media Player. Multi-user, self-hosted, powered by OpenSubtitles.
+  </Description>
+  <Config Name="WebUI Port" Target="7001" Default="7001" Mode="tcp" Description="Host port for the web UI, addon manifest and subtitle endpoints." Type="Port" Display="always" Required="true" Mask="false">7001</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/nuvio-forced-subs/data" Mode="rw" Description="Persistent storage for user accounts (users.json). Required - without it all user accounts are lost on container restart." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/nuvio-forced-subs/data</Config>
+  <Config Name="Public URL" Target="PUBLIC_URL" Default="https://nuvio-subs.yourdomain.com" Mode="" Description="Public HTTPS URL where this addon is reachable (e.g. your Cloudflare Tunnel hostname). Baked into the manifest and subtitle URLs handed to Nuvio, so it must be reachable from every device running Nuvio." Type="Variable" Display="always" Required="true" Mask="false">https://nuvio-subs.yourdomain.com</Config>
+  <Config Name="Admin Password" Target="ADMIN_PASSWORD" Default="" Mode="" Description="Optional. Set to enable the /admin page for listing and deleting users. Leave empty to disable admin entirely (it will 404)." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Internal Port" Target="PORT" Default="7001" Mode="" Description="Port the app listens on inside the container. Only change if you know why." Type="Variable" Display="advanced" Required="false" Mask="false">7001</Config>
+</Container>
