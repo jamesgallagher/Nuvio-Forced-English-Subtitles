@@ -1,0 +1,16 @@
+services:
+  nuvio-forced-subs:
+    build: .
+    container_name: nuvio-forced-subs
+    restart: unless-stopped
+    ports:
+      - "7001:7001"
+    environment:
+      - PORT=7001
+      - CONFIG_DIR=/data
+      # Public HTTPS URL of this addon (Cloudflare Tunnel hostname)
+      - PUBLIC_URL=${PUBLIC_URL:-https://nuvio-subs.yourdomain.com}
+      # Enables the /admin user-management page (omit to disable admin entirely)
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+    volumes:
+      - ./data:/data

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0877f9"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#g)"/>
+  <!-- speech bubble -->
+  <path d="M52 78c0-13 11-24 24-24h104c13 0 24 11 24 24v64c0 13-11 24-24 24h-56l-30 26v-26h-18c-13 0-24-11-24-24z" fill="#06080f" opacity="0.9"/>
+  <!-- forced-sub lines: one short line, rest empty -->
+  <rect x="76" y="96" width="72" height="12" rx="6" fill="#ffffff"/>
+  <rect x="76" y="122" width="40" height="12" rx="6" fill="#ffffff" opacity="0.45"/>
+  <!-- EN badge -->
+  <rect x="148" y="150" width="72" height="40" rx="12" fill="#ffffff"/>
+  <text x="184" y="178" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="bold" fill="#0877f9" text-anchor="middle">EN</text>
+</svg>

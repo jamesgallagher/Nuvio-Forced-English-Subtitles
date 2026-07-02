@@ -1,0 +1,19 @@
+{
+  "name": "nuvio-forced-english-subtitles",
+  "version": "2.0.0",
+  "description": "English forced subtitles (foreign-dialogue only) addon for Nuvio Media Player",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.22.2",
+    "node-fetch": "^2.7.0",
+    "opensubtitles.com": "^1.1.0"
+  },
+  "license": "MIT"
+}
