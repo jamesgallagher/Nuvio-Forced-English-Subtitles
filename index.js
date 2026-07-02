@@ -339,12 +339,19 @@ async function getDownloadUrl(token, user, fileId) {
 // ── Express app ───────────────────────────────────────────────────────────────
 const app = express();
 app.set('trust proxy', 1);
+// Collapse duplicate slashes (e.g. //u/<token>/manifest.json from a
+// trailing-slash PUBLIC_URL or client-side URL joining) so routes still match
+app.use((req, res, next) => {
+  if (req.url.includes('//')) req.url = req.url.replace(/\/{2,}/g, '/');
+  next();
+});
 app.use(require('cors')());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 function publicUrl(req) {
-  return process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  return base.replace(/\/+$/, '');
 }
 
 const APP_DIR = __dirname;
