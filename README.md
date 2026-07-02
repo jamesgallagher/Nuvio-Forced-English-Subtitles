@@ -62,12 +62,15 @@ cd nuvio-forced-subs
 PUBLIC_URL=https://nuvio-subs.yourdomain.com ADMIN_PASSWORD=pick-a-password docker compose up -d --build
 ```
 
-### Option B — Using the Unraid Docker UI
+### Option B — Using the Unraid Docker UI (prebuilt image)
+
+Every push to `main` automatically builds and publishes `ghcr.io/jamesgallagher/nuvio-forced-english-subtitles:latest` (amd64 + arm64) via GitHub Actions, so Unraid can pull it directly — no local build needed.
 
 Add a new container with these settings:
 
 | Setting                  | Value                                      |
 | ------------------------ | ------------------------------------------ |
+| Repository               | `ghcr.io/jamesgallagher/nuvio-forced-english-subtitles:latest` |
 | Container Port           | `7001`                                     |
 | Host Port                | `7001`                                     |
 | Container Path           | `/data`                                    |
@@ -117,11 +120,15 @@ Also **remove the built-in OpenSubtitles v3 addon** (or move this addon above it
 
 ## Updating
 
+**docker-compose (Option A):**
+
 ```
 cd /mnt/user/appdata/nuvio-forced-subs
 git pull
 docker compose up -d --build
 ```
+
+**Unraid Docker UI (Option B):** use *force update* on the container (or re-pull `:latest`) — the image is rebuilt automatically on every commit.
 
 User accounts are stored in `/data/users.json` and are preserved across updates.
 
