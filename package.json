@@ -1,6 +1,6 @@
 {
   "name": "nuvio-forced-english-subtitles",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "English forced subtitles (foreign-dialogue only) addon for Nuvio Media Player",
   "main": "index.js",
   "scripts": {

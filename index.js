@@ -261,10 +261,14 @@ async function findForcedSubtitle(token, user, media, baseUrl) {
     const subUrl = `${baseUrl}/u/${token}/subs/${fileId}.srt`;
     log(`  ➤ Subtitle URL being returned to Nuvio: ${subUrl}`);
 
+    // Field shape mirrors the OpenSubtitles v3 addon that Nuvio ships with:
+    // 3-letter ISO 639-2 lang code ("eng", not "en") + SubEncoding, otherwise
+    // Nuvio cannot map the track to a language and silently drops it.
     return [{
       id: `forced-en-${fileId}`,
       url: subUrl,
-      lang: 'en',
+      lang: 'eng',
+      SubEncoding: 'UTF-8',
       name: 'English (Forced)',
       title: `English Forced · ${releaseName}`,
     }];
