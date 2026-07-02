@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 
-const VERSION = '2.0.0';
+const VERSION = require('./package.json').version;
 const ADDON_ID = 'com.jscc.nuvio-forced-english-subtitles';
 const ADDON_NAME = 'Nuvio Forced English Subtitles';
 
@@ -533,6 +533,24 @@ app.get('/u/:token/api/test-key', requireUser, async (req, res) => {
   res.json(check);
 });
 
+// Pre-save validation for the signup form (no token yet)
+app.post('/api/validate', async (req, res) => {
+  const apiKey = (req.body.apiKey || '').trim();
+  const username = (req.body.username || '').trim();
+  const password = (req.body.password || '').trim();
+  if (!apiKey || !username || !password) return res.json({ ok: false, error: 'All three fields are required' });
+  res.json(await validateCredentials(apiKey, username, password));
+});
+
+// Pre-save validation for the update form (blank fields fall back to saved values)
+app.post('/u/:token/api/validate', requireUser, async (req, res) => {
+  const u = req.addonUser;
+  const apiKey = (req.body.apiKey || '').trim() || u.apiKey;
+  const username = (req.body.username || '').trim() || u.username;
+  const password = (req.body.password || '').trim() || u.password;
+  res.json(await validateCredentials(apiKey, username, password));
+});
+
 // ── Admin (optional, enabled by ADMIN_PASSWORD env var) ───────────────────────
 function requireAdmin(req, res, next) {
   if (!ADMIN_PASSWORD) return res.status(404).send('Not found');
@@ -625,6 +643,11 @@ const SHARED_STYLES = `
   .url-box { flex: 1; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .test-result { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 13px; display: none; }
+  .test-ok   { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: var(--green); }
+  .test-fail { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--red); }
+  input.url-box { min-width: 0; cursor: text; }
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2);
     border: 1px solid var(--green); color: var(--green); padding: 12px 18px; border-radius: 10px;
     font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(10px);
@@ -699,10 +722,14 @@ function landingPage(baseUrl, error) {
       </p>
       <form method="POST" action="/configure">
         ${credentialFields(true)}
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">🔑 Create my addon URL</button>
+        <div id="testResult" class="test-result"></div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button type="button" class="btn btn-outline" style="flex:1;justify-content:center" onclick="testCreds()">🔌 Test credentials</button>
+          <button type="submit" id="saveBtn" class="btn btn-primary" style="flex:1;justify-content:center" disabled>🔑 Create my addon URL</button>
+        </div>
       </form>
       <p style="font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6">
-        Credentials are validated with OpenSubtitles before your URL is created.
+        Test your credentials first — the create button unlocks once they check out.
       </p>
     </div>
     <div class="card">
@@ -712,7 +739,30 @@ function landingPage(baseUrl, error) {
       <div class="step"><div class="step-num">3</div><div class="step-text">When a title has an English forced subtitle, it loads automatically<small>When it doesn't, you get no subtitles — by design.</small></div></div>
     </div>
   </div>
-  ${TOAST_SCRIPT}</body></html>`;
+  ${TOAST_SCRIPT}
+  <script>
+    const saveBtn = document.getElementById('saveBtn');
+    ['apiKey','username','password'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+      saveBtn.disabled = true;
+      const r = document.getElementById('testResult'); r.style.display = 'none';
+    }));
+    async function testCreds() {
+      const r = document.getElementById('testResult');
+      r.style.display = 'block'; r.className = 'test-result'; r.textContent = '⏳ Testing with OpenSubtitles...';
+      try {
+        const body = {
+          apiKey: document.getElementById('apiKey').value.trim(),
+          username: document.getElementById('username').value.trim(),
+          password: document.getElementById('password').value.trim(),
+        };
+        const resp = await fetch('/api/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const d = await resp.json();
+        r.className = 'test-result ' + (d.ok ? 'test-ok' : 'test-fail');
+        r.textContent = d.ok ? '✓ Credentials valid — you can create your URL' : '✗ ' + (d.error || 'Test failed');
+        saveBtn.disabled = !d.ok;
+      } catch { r.className = 'test-result test-fail'; r.textContent = '✗ Could not reach the validation endpoint'; }
+    }
+  </script></body></html>`;
 }
 
 function configurePage(baseUrl, token, user, query) {
@@ -753,9 +803,10 @@ function configurePage(baseUrl, token, user, query) {
     <div class="card">
       <div class="card-title">Your private manifest URL</div>
       <div class="url-row">
-        <div class="url-box">${manifestUrl}</div>
-        <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${manifestUrl}').then(()=>showToast('URL copied!'))">Copy</button>
+        <input class="url-box" id="manifestUrl" readonly value="${manifestUrl}" onclick="this.select();this.setSelectionRange(0,99999)" title="${manifestUrl}"/>
+        <button class="btn btn-ghost" onclick="copyManifest()">Copy</button>
       </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Click the URL to select all of it, or use Copy.</p>
       <p style="font-size:12.5px;color:var(--amber);margin-top:14px;line-height:1.6">
         ⚠️ Treat this URL like a password — it's tied to your OpenSubtitles account and quota.
         Bookmark this page; the URL is the only way back to it.
@@ -779,9 +830,13 @@ function configurePage(baseUrl, token, user, query) {
         <div><div class="current-label">Username</div><div class="current-val">${user.username}</div></div></div>
       <form method="POST" action="/u/${token}/configure">
         ${credentialFields(false)}
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">💾 Save Changes</button>
+        <div id="formTestResult" class="test-result"></div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button type="button" class="btn btn-outline" style="flex:1;justify-content:center" onclick="testFormCreds()">🔌 Test changes</button>
+          <button type="submit" id="saveBtn" class="btn btn-primary" style="flex:1;justify-content:center" disabled>💾 Save Changes</button>
+        </div>
       </form>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px">Leave a field blank to keep its current value.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Leave a field blank to keep its current value. Test your changes first — Save unlocks once they check out.</p>
       <div id="testResult" class="test-result"></div>
       <hr class="divider"/>
       <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="testKey()">🔌 Test my credentials</button>
@@ -799,6 +854,38 @@ function configurePage(baseUrl, token, user, query) {
   </div>
   ${TOAST_SCRIPT}
   <script>
+    function copyManifest() {
+      const el = document.getElementById('manifestUrl');
+      el.select(); el.setSelectionRange(0, 99999);
+      function fallback() {
+        try { document.execCommand('copy'); showToast('URL copied!'); }
+        catch { showToast('Press Ctrl+C to copy the selected URL'); }
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(el.value).then(()=>showToast('URL copied!')).catch(fallback);
+      } else { fallback(); }
+    }
+    const saveBtn = document.getElementById('saveBtn');
+    ['apiKey','username','password'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+      saveBtn.disabled = true;
+      const r = document.getElementById('formTestResult'); r.style.display = 'none';
+    }));
+    async function testFormCreds() {
+      const r = document.getElementById('formTestResult');
+      r.style.display = 'block'; r.className = 'test-result'; r.textContent = '⏳ Testing with OpenSubtitles...';
+      try {
+        const body = {
+          apiKey: document.getElementById('apiKey').value.trim(),
+          username: document.getElementById('username').value.trim(),
+          password: document.getElementById('password').value.trim(),
+        };
+        const resp = await fetch('/u/${token}/api/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const d = await resp.json();
+        r.className = 'test-result ' + (d.ok ? 'test-ok' : 'test-fail');
+        r.textContent = d.ok ? '✓ Credentials valid — you can save' : '✗ ' + (d.error || 'Test failed');
+        saveBtn.disabled = !d.ok;
+      } catch { r.className = 'test-result test-fail'; r.textContent = '✗ Could not reach the validation endpoint'; }
+    }
     async function testKey() {
       const res = document.getElementById('testResult');
       res.style.display = 'block'; res.className = 'test-result'; res.textContent = '⏳ Testing...';
